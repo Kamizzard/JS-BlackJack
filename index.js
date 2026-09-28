@@ -1,15 +1,18 @@
 let player = {
     name: "Kami",
-    chips: 1000,
-    bet: 50
+    chips: 500,
+    bet: document.getElementById("bet-el").value
 }
 
 let cards = []
 let sum = 0
-let bet = 50
-let hasBlackJack = false
+let won = false
 let isAlive = false
+let standing = false
 let message = ""
+let dealerCards = []
+let dealerSum = 0
+
 let messageEl = document.getElementById("message-el")
 let sumEl = document.getElementById("sum-el")
 let cardsEl = document.getElementById("cards-el")
@@ -19,6 +22,59 @@ updatePlayerDetails()
 
 function updatePlayerDetails(){
 playerEl.textContent = player.name + ": $" + player.chips + " Bet: $" + player.bet
+}
+
+function startGame() {
+    if (player.chips >= player.bet && (!isAlive || won)){
+        player.chips -= player.bet
+        updatePlayerDetails()
+        isAlive = true
+        standing = false
+        won = false
+        cards.push(getRandomCard())
+        cards.push(getRandomCard())
+        sum = cards[0] + cards[1]
+        dealerDraw()
+        renderGame()
+
+    }else if(player.chips < player.bet && (!isAlive || won)){
+        message = "You're out of chips!"
+        messageEl.textContent = message
+    }else{}
+}
+
+function renderGame() {
+    displayPlayerCards()
+    sumEl.textContent = "Sum: " + sum
+    
+    if (sum < 21 && !standing) {
+        message = "What is your move?"
+    } 
+    else if (sum > 21 || (dealerSum < 22 && sum < dealerSum) ) {
+        message = "You lost!"
+        isAlive = false
+        clearGame()
+    }
+    else if (sum === dealerSum){
+        player.chips += Number(player.bet)
+        won = true
+        message = "Push!"
+        clearGame()
+    } 
+    else{
+        player.chips += (player.bet * 2) 
+        won = true
+        message = "You won!"
+        clearGame()
+    }
+    messageEl.textContent = message
+    updatePlayerDetails()
+
+}
+
+function clearGame() {
+    cards = []
+    dealerCards = []
 }
 
 function getRandomCard() {
@@ -32,51 +88,38 @@ function getRandomCard() {
     }
 }
 
-function startGame() {
-    if (player.chips >= player.bet && (!isAlive || hasBlackJack)){
-        player.chips -= player.bet
-        updatePlayerDetails()
-        isAlive = true
-        hasBlackJack = false
-        cards.push(getRandomCard())
-        cards.push(getRandomCard())
-        cards = [cards[0], cards[1]]
-        sum = cards[0] + cards[1]
-        renderGame()
-    }
-    else {
-        message = "You're out of chips!"
+function newCard() {
+    if (isAlive === true && won === false) {
+        let card = getRandomCard() 
+        cards.push(card) 
+        sum += card
+        renderGame()        
     }
 }
 
-function renderGame() {
+function stand() {
+    if (isAlive === true && won === false) {
+        standing = true
+        renderGame()        
+    }    
+}
+
+function dealerDraw() {
+    dealerCards.push(getRandomCard())
+    dealerCards.push(getRandomCard())
+    dealerSum = dealerCards[0] + dealerCards[1]
+
+    while (dealerSum < 17){
+        card = getRandomCard()
+        dealerCards.push(card)
+        dealerSum += card
+    }
+    console.log(dealerSum)
+}
+
+function displayPlayerCards() {
     cardsEl.textContent = "Cards: "
     for (let i = 0; i < cards.length; i++) {
         cardsEl.textContent += cards[i] + " "
-    }
-    
-    sumEl.textContent = "Sum: " + sum
-    if (sum <= 20) {
-        message = "Do you want to draw a new card?"
-    } else if (sum === 21) {
-        message = "You've got Blackjack!"
-        hasBlackJack = true
-        player.chips += (player.bet * 2) 
-        updatePlayerDetails()
-    } else {
-        message = "You're out of the game!"
-        isAlive = false
-        updatePlayerDetails()
-    }
-    messageEl.textContent = message
-}
-
-
-function newCard() {
-    if (isAlive === true && hasBlackJack === false) {
-        let card = getRandomCard()
-        sum += card
-        cards.push(card)
-        renderGame()        
     }
 }
